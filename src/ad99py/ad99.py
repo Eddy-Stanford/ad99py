@@ -39,6 +39,7 @@ class AlexanderDunkerton1999:
         force_intermittency: Optional[Number] = None,
         use_intrinsic_c: Union[Number, Literal["never", "always"]] = "always",
         no_alpha: bool = False,
+        no_reflection:bool = False,
         exclude_unbroken: bool = False,
         cw: float = 35,
         Bm:float = 0.4,
@@ -70,10 +71,11 @@ class AlexanderDunkerton1999:
         self.damp_level_height = damp_level_height
         ## Could be increased to consider higher wave vectors but for simplicity nk=1
         self.base_wavelength = base_wavelength
+        self.no_reflection = no_reflection
         self.force_intermittency = force_intermittency
         self.exclude_unbroken = exclude_unbroken  # Are unbroken waves include in the source spectrum or not? This only matters if the no top breaking is considered.
         self.no_alpha = no_alpha  # if set the bouyancy frequency is the TIR frequency
-        self.c0 = np.arange(-self.cmax, self.cmax + self.dc, self.dc)
+        self.cp = np.arange(-self.cmax, self.cmax + self.dc, self.dc)
         self.kwv = 2 * np.pi / self.base_wavelength
 
     @property
@@ -106,7 +108,7 @@ class AlexanderDunkerton1999:
         c: Optional[NDArray] = None,
     ):
         if c is None:
-            c = self.c0
+            c = self.cp
         source_level = self.get_source_level(z, lat=lat)
         us = u[source_level:]
         Ns = N[source_level:]
@@ -119,14 +121,18 @@ class AlexanderDunkerton1999:
         for i, (z_lvl, u_lvl, N_lvl, rho_lvl) in enumerate(zip(zs, us, Ns, rhos)):
             level = source_level + i
             intrinsic_freq = self.kwv * (c - u_lvl)
-            dz = z_lvl - z[level - 1]
-            H = -(dz) / np.log(rho_lvl / rho[level - 1])
-            # Total internal reflection
-            tir_candidates = np.abs(intrinsic_freq) >= self.reflection_frequency(
-                N_lvl, H
-            )
-            reflected_waves = tir_candidates & wave_mask
-            wave_mask = wave_mask & (~tir_candidates)
+            dz = z_lvl - (zs[i - 1] if i > 0 else z[level - 1])
+            if self.no_reflection:
+                H = np.inf
+                reflected_waves = np.zeros_like(c,dtype=bool)
+            else:
+                H = -(dz) / np.log(rho_lvl / rho[level - 1])
+                # Total internal reflection
+                tir_candidates = np.abs(intrinsic_freq) >= self.reflection_frequency(
+                    N_lvl, H
+                )
+                reflected_waves = tir_candidates & wave_mask
+                wave_mask = wave_mask & (~tir_candidates)
 
             # Breaking condition
             Q0 = 2 * N_lvl * spectrum * rho_0 / (rho_lvl * self.kwv * (c - u_lvl) ** 3)
@@ -153,12 +159,17 @@ class AlexanderDunkerton1999:
         rho_top = 2 * rhos[-1] - rhos[-2]
         N_top = Ns[-1]
         dz_top = z_top - zs[-1]
-        H_top = -(dz_top) / np.log(rhos[-1] / rhos[-2])
-        tir_candidates = np.abs(self.kwv * (c - u_top)) >= self.reflection_frequency(
-            N_top, H_top
-        )
-        reflected_waves = tir_candidates & wave_mask
-        wave_mask = wave_mask & (~tir_candidates)
+
+        if self.no_reflection:
+            H_top = np.inf
+            reflected_waves = np.zeros_like(c,dtype=bool)
+        else:
+            H_top = -(dz_top) / np.log(rhos[-1] / rhos[-2])
+            tir_candidates = np.abs(self.kwv * (c - u_top)) >= self.reflection_frequency(
+                N_top, H_top
+            )
+            reflected_waves = tir_candidates & wave_mask
+            wave_mask = wave_mask & (~tir_candidates)
 
         yield Level(
             top=True,
@@ -196,9 +207,9 @@ class AlexanderDunkerton1999:
                 rho=rho_lvl,
                 dz=dz,
                 H=H,
-                Q0=np.ones_like(self.c0) * np.nan,
-                reflected_waves=np.zeros_like(self.c0, dtype=bool),
-                breaking_waves=np.zeros_like(self.c0, dtype=bool),
+                Q0=np.ones_like(self.cp) * np.nan,
+                reflected_waves=np.zeros_like(self.cp, dtype=bool),
+                breaking_waves=np.zeros_like(self.cp, dtype=bool),
             ), len(z_damp)
 
     def get_damp_level(self, z: NDArray) -> Optional[int]:
@@ -223,16 +234,15 @@ class AlexanderDunkerton1999:
         """
         
 
-        if lat is None:
-            lat = float("nan")
-        match self.use_intrinsic_c:
-            case "never":
-                c0 = 0.0
-            case "always":
-                c0 = u
-            case _:
-                c0 = 0.0 if np.abs(lat) >= self.use_intrinsic_c else u
-        return np.sign(c-u)*self.source(c,c0)
+        if self.use_intrinsic_c == 'never':
+            c0 = 0.0
+        elif self.use_intrinsic_c == 'always':
+            c0 = u
+        elif isinstance(self.use_intrinsic_c, Number) and lat is not None:
+            c0 = 0.0 if np.abs(lat) >= self.use_intrinsic_c else u
+        else:
+            raise ValueError('`use_intrinsic_c` must be "never", "always" or a Number (with `lat` set).')
+        return np.sign(c-u)*np.abs(self.source(c,c0)) # ensure sign set purely by intrinsic phase speed
         # return (
         #     np.sign(c - u)
         #     * self.Bm
@@ -250,7 +260,7 @@ class AlexanderDunkerton1999:
             return self.force_intermittency
         return (self.Fs0 * self.dc) / (
             rho_source
-            * np.sum(np.abs(self.source_spectrum(self.c0, u, lat=lat) * self.dc))
+            * np.sum(np.abs(self.source_spectrum(self.cp, u, lat=lat) * self.dc))
         )
 
     def reflection_frequency(self, N: ArrayLike, H: ArrayLike):
@@ -289,8 +299,8 @@ class AlexanderDunkerton1999:
         lat: Optional[Number] = None,
     ):
 
-        tir_levels = np.ones_like(self.c0, dtype=int) * -1
-        breaking_levels = np.ones_like(self.c0, dtype=int) * -1
+        tir_levels = np.ones_like(self.cp, dtype=int) * -1
+        breaking_levels = np.ones_like(self.cp, dtype=int) * -1
 
         for level in self.propagate_upwards(z, u, N, rho, lat=lat):
             if level.top:
@@ -314,7 +324,7 @@ class AlexanderDunkerton1999:
         rho_source = rho[source_level]
         eps = self.intermittency(rho_source, u_source, lat=lat)
         source_spectrum = (
-            self.source_spectrum(self.c0, u_source, lat=lat) * rho_source * eps
+            self.source_spectrum(self.cp, u_source, lat=lat) * rho_source * eps
         )
         momentum_flux_abs[:] = np.sum(np.abs(source_spectrum))
         for level in self.propagate_upwards(z, u, N, rho, lat=lat):
@@ -372,7 +382,7 @@ class AlexanderDunkerton1999:
         rho_source = rho[source_level]
         eps = self.intermittency(rho_source, u_source, lat=lat)
         source_spectrum = (
-            self.source_spectrum(self.c0, u_source, lat=lat) * rho_source * eps
+            self.source_spectrum(self.cp, u_source, lat=lat) * rho_source * eps
         )
         momentum_flux_ptv[:] = np.sum(source_spectrum[source_spectrum > 0])
         momentum_flux_neg[:] = np.sum(source_spectrum[source_spectrum < 0])
@@ -389,18 +399,19 @@ class AlexanderDunkerton1999:
                 )
 
             else:
+                ## remove reflected waves from everything 
                 reflected = source_spectrum[level.reflected_waves]
                 momentum_flux_neg[: level.level + 1] -= np.sum(reflected[reflected < 0])
                 momentum_flux_ptv[: level.level + 1] -= np.sum(reflected[reflected > 0])
                 if level.top:
                     top_ptv = np.sum(
                         source_spectrum[
-                            level.breaking_waves & ((self.c0 - u_source) > 0)
+                            level.breaking_waves & ((self.cp - u_source) > 0)
                         ]
                     )
                     top_ntv = np.sum(
                         source_spectrum[
-                            level.breaking_waves & ((self.c0 - u_source) < 0)
+                            level.breaking_waves & ((self.cp - u_source) < 0)
                         ]
                     )
                     if self.damp_level_height:
@@ -446,7 +457,7 @@ class AlexanderDunkerton1999:
         idx_source = self.get_source_level(z, lat=lat)
         u_source = u[idx_source]
         rho_source = rho[idx_source]
-        source_spectrum = self.source_spectrum(self.c0, u_source, lat=lat)
+        source_spectrum = self.source_spectrum(self.cp, u_source, lat=lat)
         eps = self.intermittency(rho_source, u_source, lat=lat)
         for level in self.propagate_upwards(z, u, N, rho, lat=lat):
             if not level.top and not level.source:
@@ -534,11 +545,11 @@ class AlexanderDunkerton1999:
         u_source = u[idx_source]
         rho_source = rho[idx_source]
 
-        source_spectrum = self.source_spectrum(self.c0, u_source, lat=lat)
+        source_spectrum = self.source_spectrum(self.cp, u_source, lat=lat)
         eps = self.intermittency(rho_source, u_source, lat=lat)
         for level in self.propagate_upwards(z, u, N, rho, lat=lat):
             if level.source:
-                source_spectrum[level.breaking_waves] = 0.0
+                source_spectrum[level.breaking_waves] = 0.0 
             if level.reflected_waves.any():
                 source_spectrum[level.reflected_waves] = 0.0
             if level.top and self.exclude_unbroken and not self.damp_level_height:
