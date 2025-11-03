@@ -20,7 +20,7 @@ class AlexanderDunkerton1999Vectorized(AlexanderDunkerton1999):
             # Technically this is a stricter implementation of the AD99 definition of eps
             rho_source
             * np.sum(
-                np.abs(self.source_spectrum(self.c0, u, lat=lat)) * self.dc, axis=-1
+                np.abs(self.source_spectrum(self.cp, u, lat=lat)) * self.dc, axis=-1
             )
         )
 
@@ -64,7 +64,7 @@ class AlexanderDunkerton1999Vectorized(AlexanderDunkerton1999):
         c: Optional[np.ndarray] = None,
     ):
         if c is None:
-            c = self.c0.astype(u.dtype)
+            c = self.cp.astype(u.dtype)
         else:
             c = np.asarray(c)
 
@@ -90,11 +90,11 @@ class AlexanderDunkerton1999Vectorized(AlexanderDunkerton1999):
         Q0 = (2 * N[..., None, :] * spectrum[..., :, None] * rho_0[..., None, None]) / (
             rho[..., None, :]
             * self.kwv
-            * (self.c0[..., :, None] - u[..., None, :]) ** 3
+            * (self.cp[..., :, None] - u[..., None, :]) ** 3
         )  # batch_shape, c,z
 
-        signchange = (self.c0[..., :, None] - u[..., None, :]) * (
-            self.c0[..., :, None] - u_0[..., None, None]
+        signchange = (self.cp[..., :, None] - u[..., None, :]) * (
+            self.cp[..., :, None] - u_0[..., None, None]
         ) <= 0
         breaking_waves = ((Q0 >= 1) | (signchange)) & (level_idx >= source_levels)[
             ..., None, :
@@ -128,7 +128,7 @@ class AlexanderDunkerton1999Vectorized(AlexanderDunkerton1999):
     
         rho_0, u_0 = self.get_source_variables(z, u, N, rho, lat=lat)
         dz, _ = self.get_vertical_scales(z, rho)
-        spectrum = self.source_spectrum(self.c0, u_0, lat=lat)
+        spectrum = self.source_spectrum(self.cp, u_0, lat=lat)
         eps = self.intermittency(rho_0, u_0, lat=lat)
 
         breaking, _, topwaves, _ = self.propagate_upwards(z, u, N, rho, lat=lat)
@@ -156,10 +156,10 @@ class AlexanderDunkerton1999Vectorized(AlexanderDunkerton1999):
         rho_0, u_0 = self.get_source_variables(z, u, N, rho, lat=lat)
         u_0_brd = u_0[..., None]
         rho_0_brd = rho_0[..., None]
-        spectrum = self.source_spectrum(self.c0, u_0, lat=lat)
+        spectrum = self.source_spectrum(self.cp, u_0, lat=lat)
         eps = self.intermittency(rho_0, u_0, lat=lat)
-        ptv = ((self.c0 - u_0_brd) > 0)[..., :, None]
-        ntv = ((self.c0 - u_0_brd) < 0)[..., :, None]
+        ptv = ((self.cp - u_0_brd) > 0)[..., :, None]
+        ntv = ((self.cp - u_0_brd) < 0)[..., :, None]
         breaking, reflecting, topwaves, source_unstable = self.propagate_upwards(
             z, u, N, rho, lat=lat
         )
