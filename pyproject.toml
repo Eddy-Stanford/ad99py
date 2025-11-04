@@ -22,7 +22,9 @@ dependencies = [ # Package requirements
     "scipy",
     "xarray",
     "dask",
-    "requests"
+    "requests",
+    "pandas",
+    "tqdm"
 ]
 
 

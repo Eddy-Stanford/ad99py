@@ -3,6 +3,7 @@ import numpy as np
 import pathlib
 import os
 from importlib import resources
+from tqdm import tqdm
 from platformdirs import user_cache_dir
 from ._masks import get_xarray_mask, get_numpy_mask
 from ._loon import process_flights
@@ -42,16 +43,26 @@ def get_cache_dir() -> pathlib.Path:
     return path
 
 
+
+
 def ensure_data(filename: str, url: str) -> pathlib.Path:
     cache_path = get_cache_dir() / filename
-    if not cache_path.exists():
-        print(f"Downloading {filename} to {cache_path}")
-        r = requests.get(url)
-        r.raise_for_status()
-        with open(cache_path, "wb") as f:
-            f.write(r.content)
-    return cache_path
 
+    if not cache_path.exists():
+        print(f"[INFO] Downloading {filename} to {cache_path}")
+        # Stream the response
+        with requests.get(url, stream=True) as r:
+            r.raise_for_status()
+            total_size = int(r.headers.get('Content-Length', 0))
+            chunk_size = 8192  # 8 KB
+            with open(cache_path, "wb") as f, tqdm(
+                total=total_size, unit='B', unit_scale=True, desc=filename
+            ) as pbar:
+                for chunk in r.iter_content(chunk_size=chunk_size):
+                    if chunk:
+                        f.write(chunk)
+                        pbar.update(len(chunk))
+    return cache_path
 
 def download_loon_data():
     print(f"[INFO] Downloading Loon data from {LOON_DATA_URL}")
