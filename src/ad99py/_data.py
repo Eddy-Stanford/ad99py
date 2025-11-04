@@ -56,12 +56,12 @@ def save_loon_basins():
     loon_data = download_loon_data()
     masks = get_numpy_mask()
     trop_atl_flights,extra_atl_flights,extra_pac_flights,indian_flights,trop_pac_flights,SO_flights = process_flights(loon_data,masks)
-    trop_atl_flights_path = get_cache_dir() / 'trop_atl_flights_flux.npy'
-    extra_atl_flights_path = get_cache_dir() / 'extra_atl_flights_flux.npy'
-    extra_pac_flights_path = get_cache_dir() / 'extra_pac_flights_flux.npy'
+    trop_atl_flights_path = get_cache_dir() / 'tropical_atlantic_flights_flux.npy'
+    extra_atl_flights_path = get_cache_dir() / 'extratropical_atlantic_flights_flux.npy'
+    extra_pac_flights_path = get_cache_dir() / 'extratropical_pacific_flights_flux.npy'
     indian_flights_path = get_cache_dir() / 'indian_flights_flux.npy'
-    trop_pac_flights_path = get_cache_dir() / 'trop_pac_flights_flux.npy'
-    SO_flights_path = get_cache_dir() / 'SO_flights_flux.npy'
+    trop_pac_flights_path = get_cache_dir() / 'tropical_pacific_flights_flux.npy'
+    SO_flights_path = get_cache_dir() / 'southern_ocean_flights_flux.npy'
     np.save(trop_atl_flights_path,trop_atl_flights) 
     print(f"[INFO] Saved Tropical Atlantic flights to {trop_atl_flights_path}")
     np.save(extra_atl_flights_path,extra_atl_flights)
