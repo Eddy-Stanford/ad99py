@@ -101,7 +101,7 @@ def process_flights(flight_path, masks):
     )  # round to the region's integer value
     flights["grid_cell_number"] = data_cellnum
 
-    flights = flights.groupby("segment_id").progress_apply(dt_start_end)
+    flights = flights.groupby("segment_id").apply(dt_start_end)
     flights = flights[flights.dt_start > 2]
     flights = flights[flights.dt_end > 2]
 
