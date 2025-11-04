@@ -5,6 +5,10 @@ import os
 DEFAULT_MASK_NAME = 'loon_masks.nc'
 DEFAULT_MASK_DIR = 'data'
 
+def list_basins(**kwargs):
+    mask = load_mask(**kwargs)
+    return [str(k) for k in mask.data_vars.keys()]
+
 def default_path(dir=DEFAULT_MASK_DIR,name=DEFAULT_MASK_NAME):
     return os.path.join(dir,name)
 
