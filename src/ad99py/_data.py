@@ -2,7 +2,6 @@ import requests
 import numpy as np
 import pathlib
 import os
-from importlib import resources
 from tqdm import tqdm
 from platformdirs import user_cache_dir
 from ._masks import get_xarray_mask, get_numpy_mask
