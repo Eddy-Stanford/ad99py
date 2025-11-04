@@ -4,7 +4,7 @@ from .masks import list_basins
 from ._data import get_loon_basin_data
 
 
-def get_basin_flux_data_path(path=None,basin=None):
+def get_basin_flux_data_path(basin,path=None):
     if basin not in list_basins():
         raise ValueError(f"Basin '{basin}' not found in available basins: {list_basins()}")
     if path is None:
@@ -22,7 +22,7 @@ def get_fluxes(basins=None,path=None):
     if not basins:
         basins = list_basins() 
     try: 
-        paths = [get_basin_flux_data_path(path,b) for b in basins]
+        paths = [get_basin_flux_data_path(b,path) for b in basins]
     except TypeError as e:
         raise TypeError("If argument not `None` then expected an iterable type of basins.") from e 
     if len(paths) == 0:
