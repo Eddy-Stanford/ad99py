@@ -1,22 +1,30 @@
 import os 
 import numpy as np
-from glob import glob 
-DEFAULT_LOON_GW_DATA_PATH = 'data/loon'
+from .masks import list_basins
+from ._data import get_loon_basin_data
+
+
+def get_basin_flux_data_path(path=None,basin=None):
+    if basin not in list_basins():
+        raise ValueError(f"Basin '{basin}' not found in available basins: {list_basins()}")
+    if path is None:
+        data_path = get_loon_basin_data(basin)
+    else:
+        data_path = os.path.join(path,f"{basin}_flights_flux.npy")
+    return data_path
+
 
 def get_fluxes(basins=None,path=None):
     u_flux_ptv = []
     u_flux_ntv = []
     v_flux_ntv = []
     v_flux_ptv = []
-    if path is None:
-        path = DEFAULT_LOON_GW_DATA_PATH
-    if basins:
-        try: 
-            paths = [os.path.join(path,f'{b}_flights_flux.npy') for b in basins]
-        except TypeError as e:
-            raise TypeError("If argument not `None` then expected an iterable type of basins.") from e 
-    else:
-        paths = glob(os.path.join(path,'*flux.npy'))
+    if not basins:
+        basins = list_basins() 
+    try: 
+        paths = [get_basin_flux_data_path(path,b) for b in basins]
+    except TypeError as e:
+        raise TypeError("If argument not `None` then expected an iterable type of basins.") from e 
     if len(paths) == 0:
         raise FileNotFoundError(f"No flux files found in {path}.")
     for f in paths:

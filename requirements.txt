@@ -3,4 +3,5 @@ scipy
 xarray
 dask
 windspharm[harmonics]
+requests
 pytest

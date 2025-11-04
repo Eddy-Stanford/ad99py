@@ -1,17 +1,24 @@
 from typing import Optional
 import xarray as xr
 import os
+from functools import cache
+from ._data import get_loon_nc_mask_path
 
-DEFAULT_MASK_NAME = 'loon_masks.nc'
-DEFAULT_MASK_DIR = 'data'
 
-def default_path(dir=DEFAULT_MASK_DIR,name=DEFAULT_MASK_NAME):
+@cache
+def list_basins(**kwargs):
+    mask = load_mask(**kwargs)
+    return [str(k) for k in mask.data_vars.keys()]
+
+def default_mask_path(dir=None,name=None)->str:
+    if dir is None or name is None:
+        return get_loon_nc_mask_path()
     return os.path.join(dir,name)
 
 
 def load_mask(path:Optional[str]=None,recentering:bool=True,**kwargs)->xr.Dataset:
     if path is None:
-        path = default_path(**kwargs)
+        path = default_mask_path(**kwargs)
     ds_mask = xr.open_dataset(path)
     if recentering:
         # map longitudes to be in range 0-360

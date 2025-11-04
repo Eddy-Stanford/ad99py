@@ -21,7 +21,8 @@ dependencies = [ # Package requirements
     "numpy",
     "scipy",
     "xarray",
-    "dask"
+    "dask",
+    "requests"
 ]
 
 
