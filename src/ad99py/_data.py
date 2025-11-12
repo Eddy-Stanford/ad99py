@@ -16,7 +16,7 @@ LOON_NP_MASK_NAME = "loon_masks.npy"
 CACHE_ENV_VAR = "AD99PY_CACHE_DIR"
 
 
-def get_loon_nc_mask_path():
+def get_loon_nc_mask_path() -> pathlib.Path:
     cache_path = get_cache_dir() / LOON_NC_MASK_NAME
     if not cache_path.exists():
         mask_ds = get_xarray_mask()
@@ -24,7 +24,7 @@ def get_loon_nc_mask_path():
     return cache_path
 
 
-def get_loon_np_mask_path():
+def get_loon_np_mask_path() -> pathlib.Path:
     cache_path = get_cache_dir() / LOON_NP_MASK_NAME
     if not cache_path.exists():
         mask_np = get_numpy_mask()
@@ -63,7 +63,10 @@ def ensure_data(filename: str, url: str) -> pathlib.Path:
                         pbar.update(len(chunk))
     return cache_path
 
-def download_loon_data():
+def download_loon_data() -> pathlib.Path:
+    """
+    Ensure the Loon GW momentum flux data CSV is downloaded and cached locally.
+    """
     print(f"[INFO] Downloading Loon data from {LOON_DATA_URL}")
     print(
         "[INFO] Loon data is licensed under CC BY 4.0. Please cite the original source (Rhodes and Candido, 2021) when using this data."
@@ -72,6 +75,10 @@ def download_loon_data():
 
 
 def save_loon_basins():
+    """
+    Process and save Loon basin data to cache directory.
+    All basins are cached if not already present.
+    """
     loon_data = download_loon_data()
     masks = get_numpy_mask()
     (
@@ -110,7 +117,10 @@ def save_loon_basins():
     )
 
 
-def get_loon_basin_data(basin: str):
+def get_loon_basin_data(basin: str) -> pathlib.Path:
+    """
+    Get the file path for the specified Loon basin flux flight data.
+    """
     path_name = get_cache_dir() / f"{basin}_flights_flux.npy"
     if not path_name.exists():
         print(

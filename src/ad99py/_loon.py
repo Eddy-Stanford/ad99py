@@ -38,6 +38,9 @@ LOON_DTYPES = {
 
 
 def flights_to_numpy_array(flight):
+    """
+    ConvertDataFrame of flights into numpy array of directional fluxes in mPa
+    """
     return (
         np.stack(
             [
@@ -47,7 +50,7 @@ def flights_to_numpy_array(flight):
                 flight.flux_north.values,
             ]
         )
-        * 1000
+        * 1000 # Convert to mPa
     )
 
 
@@ -138,7 +141,10 @@ def process_flights(flight_path, masks):
 
 
 def delete_depressureizations(flights):
-    # Delete depressurizations
+    """
+    Delete depressurizations from the flight data.
+    Taken from Green et al. (2024) JGR Atmospheres
+    """
     flights = flights.copy()
     # My approach, based on running a few depressurizations through the wavelet analysis, is to delete
     # both the depressurization and the data within 2 hours (to the nearsest hour, rounding up) or the
