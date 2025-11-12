@@ -3,5 +3,6 @@ scipy
 xarray
 dask
 windspharm[harmonics]
+platformdirs
 requests
 pytest
