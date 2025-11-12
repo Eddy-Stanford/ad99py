@@ -148,7 +148,7 @@ class TestEnsureData:
                 
                 # Should have made the request
                 mock_get.assert_called_once_with(
-                    'https://stacks.stanford.edu/file/zh044ts5443/loon_GW_momentum_fluxes.csv'
+                    'https://stacks.stanford.edu/file/zh044ts5443/loon_GW_momentum_fluxes.csv',stream=True
                 )
                 mock_response.raise_for_status.assert_called_once()
                 
@@ -342,7 +342,7 @@ class TestSaveLoonBasins:
                 assert len(result_paths) == 6
                 
                 # Check that all expected files are in the results
-                expected_basins = ['trop_atl', 'extra_atl', 'extra_pac', 'indian', 'trop_pac', 'SO']
+                expected_basins = ['tropical_atlantic', 'extratropical_atlantic', 'extratropical_pacific', 'indian', 'tropical_pacific', 'southern_ocean']
                 for i, basin in enumerate(expected_basins):
                     expected_path = Path(temp_dir) / f'{basin}_flights_flux.npy'
                     assert result_paths[i] == expected_path
