@@ -133,6 +133,9 @@ class TestEnsureData:
             # Mock the response
             mock_response = MagicMock()
             mock_response.content = test_content
+            mock_response.iter_content.return_value = [test_content]
+            mock_response.__enter__.return_value = mock_response
+            mock_response.__exit__.return_value = None
             mock_get.return_value = mock_response
             
             with patch('ad99py._data.get_cache_dir') as mock_get_cache_dir:
