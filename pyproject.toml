@@ -17,11 +17,15 @@ classifiers = [
 ]
 license = "MIT"
 license-files = ["LICEN[CS]E*"]
-dependencies = [ # Package requirements
+dependencies = [ # Package requirements,
+    "platformdirs",
     "numpy",
     "scipy",
     "xarray",
-    "dask"
+    "dask",
+    "requests",
+    "pandas",
+    "tqdm"
 ]
 
 

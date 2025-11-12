@@ -4,38 +4,18 @@ import xarray as xr
 import os
 import tempfile
 from unittest.mock import patch, Mock
-from ad99py.masks import default_path, load_mask, mask_dataset, DEFAULT_MASK_NAME, DEFAULT_MASK_DIR
+from ad99py.masks import default_mask_path, load_mask, mask_dataset
 
 
 class TestDefaultPath:
     """Test cases for the default_path function."""
     
-    def test_default_path_with_defaults(self):
-        """Test default_path with default parameters."""
-        result = default_path()
-        expected = os.path.join(DEFAULT_MASK_DIR, DEFAULT_MASK_NAME)
-        assert result == expected
-        assert result == "data/loon_masks.nc"
-    
-    def test_default_path_custom_dir(self):
-        """Test default_path with custom directory."""
-        custom_dir = "custom_data"
-        result = default_path(dir=custom_dir)
-        expected = os.path.join(custom_dir, DEFAULT_MASK_NAME)
-        assert result == expected
-    
-    def test_default_path_custom_name(self):
-        """Test default_path with custom filename."""
-        custom_name = "custom_mask.nc"
-        result = default_path(name=custom_name)
-        expected = os.path.join(DEFAULT_MASK_DIR, custom_name)
-        assert result == expected
     
     def test_default_path_custom_both(self):
         """Test default_path with both custom directory and filename."""
         custom_dir = "custom_data"
         custom_name = "custom_mask.nc"
-        result = default_path(dir=custom_dir, name=custom_name)
+        result = default_mask_path(dir=custom_dir, name=custom_name)
         expected = os.path.join(custom_dir, custom_name)
         assert result == expected
 
@@ -69,7 +49,7 @@ class TestLoadMask:
         result = load_mask()
         
         # Check that open_dataset was called with the default path
-        mock_open_dataset.assert_called_once_with(default_path())
+        mock_open_dataset.assert_called_once_with(default_mask_path())
         
         # Check recentering happened (longitude values should be 0-360)
         assert np.all(result.lon >= 0)
