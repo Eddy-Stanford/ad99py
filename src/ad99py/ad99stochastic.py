@@ -14,10 +14,11 @@ class AlexanderDunkerton1999Stochastic(AlexanderDunkerton1999):
     """
 
     def __init__(self,Fs0,Fs0_sigma, *args, rng=None, seed=None, Fs0_meaning:Literal['mean','median']='mean', **kwargs):
+        super().__init__(Fs0=Fs0,*args, **kwargs)
         self.Fs0_sigma = Fs0_sigma
-        if Fs0_meaning is 'mean':
+        if Fs0_meaning == 'mean':
             self.Fs0_mu = np.log(Fs0) - 0.5 * Fs0_sigma**2
-        elif Fs0_meaning is 'median':
+        elif Fs0_meaning == 'median':
             self.Fs0_mu = np.log(Fs0)
         else:
             raise ValueError("Fs0_meaning must be 'mean' or 'median'")
@@ -27,7 +28,6 @@ class AlexanderDunkerton1999Stochastic(AlexanderDunkerton1999):
             self.rng = np.random.default_rng(seed)
         self.rng = rng  # Random number generator, please seed for consistency.
 
-        super().__init__(Fs0,*args, **kwargs)
 
     def intermittency(self, rho_source, u=None, lat=None):
         base_intermittency = self.dc / ( # intermittency without Fs0 scaling 
