@@ -250,6 +250,7 @@ class AlexanderDunkerton1999:
         #     * (~np.isclose(c - u, 0.0))
         # )
 
+
     def intermittency(
         self,
         rho_source: Number,
