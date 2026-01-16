@@ -8,8 +8,7 @@ message: >-
   metadata from this file.
 type: software
 authors:
-  - given-names: Robert
-    name-particle: C
+  - given-names: Robert C.
     family-names: King
     email: robcking@stanford.edu
     affiliation: Stanford University
